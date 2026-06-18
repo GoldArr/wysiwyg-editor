@@ -13,7 +13,15 @@ import {
   Table as TableIcon,
   BetweenHorizontalEnd,
   BetweenVerticalEnd,
-  Trash2
+  Trash2,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Unlink,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Highlighter,
+  CheckSquare
 } from 'lucide-react';
 
 interface MenuBarProps {
@@ -29,7 +37,26 @@ const MenuBar = ({ editor }: MenuBarProps) => {
     );
   }
 
-  const items = [
+  const setLink = () => {
+    const previousUrl = editor.getAttributes('link').href;
+    const url = window.prompt('URL', previousUrl);
+
+    if (url === null) return;
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  };
+
+  const addImage = () => {
+    const url = window.prompt('URL изображения');
+    if (url) {
+      editor.chain().focus().setImage({ src: url }).run();
+    }
+  };
+
+  const textItems = [
     {
       icon: Bold,
       title: 'Жирный',
@@ -43,6 +70,15 @@ const MenuBar = ({ editor }: MenuBarProps) => {
       isActive: () => editor.isActive('italic'),
     },
     {
+      icon: Highlighter,
+      title: 'Выделение маркером',
+      action: () => editor.chain().focus().toggleHighlight().run(),
+      isActive: () => editor.isActive('highlight'),
+    },
+  ];
+
+  const layoutItems = [
+    {
       icon: Heading1,
       title: 'Заголовок 1',
       action: () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
@@ -54,6 +90,27 @@ const MenuBar = ({ editor }: MenuBarProps) => {
       action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
       isActive: () => editor.isActive('heading', { level: 2 }),
     },
+    {
+      icon: AlignLeft,
+      title: 'По левому краю',
+      action: () => editor.chain().focus().setTextAlign('left').run(),
+      isActive: () => editor.isActive({ textAlign: 'left' }),
+    },
+    {
+      icon: AlignCenter,
+      title: 'По центру',
+      action: () => editor.chain().focus().setTextAlign('center').run(),
+      isActive: () => editor.isActive({ textAlign: 'center' }),
+    },
+    {
+      icon: AlignRight,
+      title: 'По правому краю',
+      action: () => editor.chain().focus().setTextAlign('right').run(),
+      isActive: () => editor.isActive({ textAlign: 'right' }),
+    },
+  ];
+
+  const listItems = [
     {
       icon: List,
       title: 'Маркированный список',
@@ -67,6 +124,12 @@ const MenuBar = ({ editor }: MenuBarProps) => {
       isActive: () => editor.isActive('orderedList'),
     },
     {
+      icon: CheckSquare,
+      title: 'Список задач',
+      action: () => editor.chain().focus().toggleTaskList().run(),
+      isActive: () => editor.isActive('taskList'),
+    },
+    {
       icon: Quote,
       title: 'Цитата',
       action: () => editor.chain().focus().toggleBlockquote().run(),
@@ -77,6 +140,26 @@ const MenuBar = ({ editor }: MenuBarProps) => {
       title: 'Код',
       action: () => editor.chain().focus().toggleCodeBlock().run(),
       isActive: () => editor.isActive('codeBlock'),
+    },
+  ];
+
+  const mediaItems = [
+    {
+      icon: LinkIcon,
+      title: 'Вставить ссылку',
+      action: setLink,
+      isActive: () => editor.isActive('link'),
+    },
+    {
+      icon: Unlink,
+      title: 'Удалить ссылку',
+      action: () => editor.chain().focus().unsetLink().run(),
+      disabled: !editor.isActive('link'),
+    },
+    {
+      icon: ImageIcon,
+      title: 'Вставить изображение по URL',
+      action: addImage,
     },
   ];
 
@@ -131,7 +214,7 @@ const MenuBar = ({ editor }: MenuBarProps) => {
           disabled={item.disabled}
           className={`p-2.5 rounded-full transition-all duration-200 ${
             item.disabled 
-              ? 'opacity-30 cursor-not-allowed'
+              ? 'opacity-30 cursor-not-allowed text-gray-500'
               : item.isActive?.() 
                 ? 'bg-[#c2e7ff] dark:bg-[#004d40] text-[#001d35] dark:text-[#80cbc4]' 
                 : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -145,11 +228,17 @@ const MenuBar = ({ editor }: MenuBarProps) => {
   );
 
   return (
-    <div className="flex flex-wrap gap-4 p-2 bg-[#f3f3f3] dark:bg-[#2a2a2a] rounded-full mx-4 shadow-sm transition-colors duration-200 overflow-x-auto">
-      {renderButtons(items)}
-      <div className="w-px bg-gray-300 dark:bg-gray-600 my-2"></div>
+    <div className="flex flex-wrap gap-2 p-1.5 bg-[#f3f3f3] dark:bg-[#2a2a2a] rounded-[24px] mx-4 shadow-sm transition-colors duration-200 overflow-x-auto">
+      {renderButtons(textItems)}
+      <div className="w-px bg-gray-300 dark:bg-gray-600 my-2 mx-1"></div>
+      {renderButtons(layoutItems)}
+      <div className="w-px bg-gray-300 dark:bg-gray-600 my-2 mx-1"></div>
+      {renderButtons(listItems)}
+      <div className="w-px bg-gray-300 dark:bg-gray-600 my-2 mx-1"></div>
+      {renderButtons(mediaItems)}
+      <div className="w-px bg-gray-300 dark:bg-gray-600 my-2 mx-1"></div>
       {renderButtons(tableItems)}
-      <div className="w-px bg-gray-300 dark:bg-gray-600 my-2"></div>
+      <div className="w-px bg-gray-300 dark:bg-gray-600 my-2 mx-1"></div>
       {renderButtons(historyItems)}
     </div>
   );

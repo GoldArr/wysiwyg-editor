@@ -5,34 +5,63 @@ import { Table } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
 import { TableHeader } from '@tiptap/extension-table-header';
 import { TableCell } from '@tiptap/extension-table-cell';
+import Image from '@tiptap/extension-image';
+import Link from '@tiptap/extension-link';
+import TextAlign from '@tiptap/extension-text-align';
+import Highlight from '@tiptap/extension-highlight';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
 import React, { useEffect } from 'react';
 
 interface VisualPaneProps {
   /** Текст в формате Markdown или HTML */
   content: string;
-  /** Колбэк при обновлении содержимого (вызывается без аргументов, родитель сам забирает нужный формат) */
+  /** Колбэк при обновлении содержимого */
   onUpdate: () => void;
   /** Обработчик прокрутки для синхронизации */
   onScroll?: (e: React.UIEvent<HTMLElement>) => void;
   /** Ссылка на DOM-элемент для управления прокруткой */
   scrollRef?: React.RefObject<HTMLDivElement | null>;
-  /** Колбэк для передачи инстанса редактора родительскому компоненту (исправляет баг с появлением тулбара) */
+  /** Колбэк для передачи инстанса редактора родительскому компоненту */
   onEditorReady?: (editor: Editor) => void;
 }
 
 /**
  * Визуальный WYSIWYG редактор на базе Tiptap.
+ * Поддерживает Drag-and-Drop изображений и расширенное форматирование.
  */
 const VisualPane = ({ content, onUpdate, onScroll, scrollRef, onEditorReady }: VisualPaneProps) => {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        codeBlock: false, // Отключаем стандартный, если захотим lowlight позже
+      }),
       Table.configure({
         resizable: true,
       }),
       TableRow,
       TableHeader,
       TableCell,
+      Image.configure({
+        allowBase64: true,
+        HTMLAttributes: {
+          class: 'rounded-2xl shadow-lg max-w-full h-auto my-4',
+        },
+      }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-blue-600 underline cursor-pointer',
+        },
+      }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+      }),
+      Highlight.configure({ multicolor: true }),
+      TaskList,
+      TaskItem.configure({
+        nested: true,
+      }),
       Markdown.configure({
         html: true,
         tightLists: true,
@@ -43,27 +72,42 @@ const VisualPane = ({ content, onUpdate, onScroll, scrollRef, onEditorReady }: V
     ],
     content: content,
     onUpdate: () => {
-      // Уведомляем App о том, что визуальный редактор изменился
       onUpdate();
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-blue dark:prose-invert focus:outline-none min-h-full p-6 max-w-none',
+        class: 'prose prose-blue dark:prose-invert focus:outline-none min-h-full p-8 max-w-none',
+      },
+      // Реализация Drag-and-Drop для изображений
+      handleDrop: (view, event, _slice, moved) => {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+          const file = event.dataTransfer.files[0];
+          const type = file.type;
+
+          if (type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (readerEvent) => {
+              const base64 = readerEvent.target?.result as string;
+              view.dispatch(view.state.tr.replaceSelectionWith(
+                view.state.schema.nodes.image.create({ src: base64 })
+              ));
+            };
+            reader.readAsDataURL(file);
+            return true; // Обработано
+          }
+        }
+        return false;
       },
     },
   });
 
-  // Экспортируем инстанс редактора во внешний мир для MenuBar и конвертации
   useEffect(() => {
     if (editor && onEditorReady) {
       onEditorReady(editor);
     }
   }, [editor, onEditorReady]);
 
-  // Синхронизация контента: Markdown/HTML (из CodePane) -> VisualPane
   useEffect(() => {
-    // Надежный способ избежать зацикливания:
-    // Мы обновляем Tiptap только если он СЕЙЧАС НЕ в фокусе (т.е. пользователь печатает в CodePane).
     if (editor && !editor.isFocused) {
       editor.commands.setContent(content, { emitUpdate: false });
     }
