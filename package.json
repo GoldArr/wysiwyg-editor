@@ -12,6 +12,10 @@
   "dependencies": {
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.1",
+    "@tiptap/extension-table": "^3.27.0",
+    "@tiptap/extension-table-cell": "^3.27.0",
+    "@tiptap/extension-table-header": "^3.27.0",
+    "@tiptap/extension-table-row": "^3.27.0",
     "@tiptap/react": "^3.27.0",
     "@tiptap/starter-kit": "^3.27.0",
     "@types/prismjs": "^1.26.6",

@@ -10,6 +10,10 @@ import {
   Code,
   Heading1,
   Heading2,
+  Table as TableIcon,
+  BetweenHorizontalEnd,
+  BetweenVerticalEnd,
+  Trash2
 } from 'lucide-react';
 
 interface MenuBarProps {
@@ -74,6 +78,35 @@ const MenuBar = ({ editor }: MenuBarProps) => {
       action: () => editor.chain().focus().toggleCodeBlock().run(),
       isActive: () => editor.isActive('codeBlock'),
     },
+  ];
+
+  const tableItems = [
+    {
+      icon: TableIcon,
+      title: 'Вставить таблицу',
+      action: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run(),
+    },
+    {
+      icon: BetweenHorizontalEnd,
+      title: 'Добавить строку',
+      action: () => editor.chain().focus().addRowAfter().run(),
+      disabled: !editor.can().addRowAfter(),
+    },
+    {
+      icon: BetweenVerticalEnd,
+      title: 'Добавить колонку',
+      action: () => editor.chain().focus().addColumnAfter().run(),
+      disabled: !editor.can().addColumnAfter(),
+    },
+    {
+      icon: Trash2,
+      title: 'Удалить таблицу',
+      action: () => editor.chain().focus().deleteTable().run(),
+      disabled: !editor.can().deleteTable(),
+    },
+  ];
+
+  const historyItems = [
     {
       icon: Undo,
       title: 'Отменить',
@@ -86,25 +119,38 @@ const MenuBar = ({ editor }: MenuBarProps) => {
     },
   ];
 
-  return (
-    <div className="flex flex-wrap gap-1 p-2 bg-[#f3f3f3] dark:bg-[#2a2a2a] rounded-full mx-4 shadow-sm transition-colors duration-200">
-      {items.map((item, index) => (
+  const renderButtons = (btnGroup: any[]) => (
+    <div className="flex gap-1 items-center">
+      {btnGroup.map((item, index) => (
         <button
           key={index}
           onClick={(e) => {
             e.preventDefault();
             item.action();
           }}
+          disabled={item.disabled}
           className={`p-2.5 rounded-full transition-all duration-200 ${
-            item.isActive?.() 
-              ? 'bg-[#c2e7ff] dark:bg-[#004d40] text-[#001d35] dark:text-[#80cbc4]' 
-              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+            item.disabled 
+              ? 'opacity-30 cursor-not-allowed'
+              : item.isActive?.() 
+                ? 'bg-[#c2e7ff] dark:bg-[#004d40] text-[#001d35] dark:text-[#80cbc4]' 
+                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
           }`}
           title={item.title}
         >
           <item.icon size={18} strokeWidth={item.isActive?.() ? 2.5 : 2} />
         </button>
       ))}
+    </div>
+  );
+
+  return (
+    <div className="flex flex-wrap gap-4 p-2 bg-[#f3f3f3] dark:bg-[#2a2a2a] rounded-full mx-4 shadow-sm transition-colors duration-200 overflow-x-auto">
+      {renderButtons(items)}
+      <div className="w-px bg-gray-300 dark:bg-gray-600 my-2"></div>
+      {renderButtons(tableItems)}
+      <div className="w-px bg-gray-300 dark:bg-gray-600 my-2"></div>
+      {renderButtons(historyItems)}
     </div>
   );
 };
