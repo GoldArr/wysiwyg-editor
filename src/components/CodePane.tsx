@@ -6,7 +6,7 @@ import 'prismjs/components/prism-markup'; // Для поддержки HTML
 import 'prismjs/themes/prism.css';
 
 // Обработка проблемы с ESM/CJS экспортами в Vite
-// @ts-ignore
+// @ts-expect-error - react-simple-code-editor ESM mismatch
 const Editor = EditorImport.default || EditorImport;
 
 interface CodePaneProps {

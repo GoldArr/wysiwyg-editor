@@ -1,4 +1,4 @@
-import { Editor } from '@tiptap/react';
+import type { Editor } from '../types/editor';
 import { 
   Bold, 
   Italic, 
@@ -46,6 +46,13 @@ const MenuBar = ({ editor }: MenuBarProps) => {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
       return;
     }
+
+    // Защита от XSS (запрет javascript: ссылок)
+    if (!/^https?:\/\//i.test(url) && !url.startsWith('mailto:') && !url.startsWith('tel:')) {
+      alert('В целях безопасности допускаются только ссылки начинающиеся с http://, https://, mailto: или tel:');
+      return;
+    }
+
     editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
   };
 
@@ -202,7 +209,15 @@ const MenuBar = ({ editor }: MenuBarProps) => {
     },
   ];
 
-  const renderButtons = (btnGroup: any[]) => (
+  interface MenuItem {
+    icon: React.ElementType;
+    title: string;
+    action: () => void;
+    isActive?: () => boolean;
+    disabled?: boolean;
+  }
+
+  const renderButtons = (btnGroup: MenuItem[]) => (
     <div className="flex gap-1 items-center">
       {btnGroup.map((item, index) => (
         <button

@@ -1,4 +1,5 @@
-import { useEditor, EditorContent, Editor } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import type { Editor } from '../types/editor';
 import StarterKit from '@tiptap/starter-kit';
 import { Markdown } from 'tiptap-markdown';
 import { Table } from '@tiptap/extension-table';
@@ -78,7 +79,7 @@ const VisualPane = ({ content, onUpdate, onScroll, scrollRef, onEditorReady }: V
       attributes: {
         class: 'prose prose-blue dark:prose-invert focus:outline-none min-h-full p-8 max-w-none',
       },
-      // Реализация Drag-and-Drop для изображений
+      // @ts-expect-error - Tiptap handleDrop types are complex
       handleDrop: (view, event, _slice, moved) => {
         if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
           const file = event.dataTransfer.files[0];
